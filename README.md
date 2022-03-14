@@ -17,7 +17,10 @@ py_sw2abc <file_in> [--copy/no-copy]
 
 **SongWright input:**
 
-```N-A-Beggin' I Will Go
+Images are rendered with ABCjs.
+
+```
+N-A-Beggin' I Will Go
 C-
 A-
 T-
@@ -49,11 +52,10 @@ w: And a beg- gin'_ I will_ go,_ will_ go,_ And a- beg- gin' I will go.
 
 ![py_sw2abc output](/examples/py_sw2abc_output.png)
 
-(image rendered with ABCjs)
-
 **Compare to previous scripts:**
 
-```T:A-Beggin' I Will Go
+```
+T:A-Beggin' I Will Go
 M:4/4
 L:1/8
 K:C
@@ -62,5 +64,3 @@ c-BA-GA-G FE| F2 A2 G2 B2| c6 z||
 ```
 
 ![py_sw2abc output](/examples/gawk_output.png)
-
-(image rendered with ABCjs)
