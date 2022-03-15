@@ -264,16 +264,16 @@ def parse_line(ltype, sep, data, state):
             elif re.match("^S-4", state.m_line):  # repeat-from
                 build_str += "|:"
                 state.m_line = state.m_line[3:]
-            elif re.match(r"^(\w)([-#\$&\*%])(\d)", state.m_line):
+            elif re.match(r"^(\S)([-#\$&\*%])(\S)", state.m_line):
                 the_note = ""
 
-                m = re.match(r"^(\w)([-#\$&\*%])([67])", state.m_line)  # start triplet
+                m = re.match(r"^(\S)([-#\$&\*%])([67])", state.m_line)  # start triplet
                 if m:
                     if open_triplet == 0:
                         build_str += "(3 "
                     open_triplet += 1
 
-                m = re.match(r"^(\w)([-#\$&\*%])(\d)", state.m_line)
+                m = re.match(r"^(\S)([-#\$&\*%])(\S)", state.m_line)
                 if NOTE_DICT[m.group(1)]:
                     if DUR_DICT[m.group(3)]:
                         the_note += (
@@ -285,7 +285,7 @@ def parse_line(ltype, sep, data, state):
                 else:
                     logging.error("Found confusing group: %s", m.groups())
 
-                if re.match(r"^(\w)([-#\$&\*%])(\d)_", state.m_line):
+                if re.match(r"^(\S)([-#\$&\*%])(\S)_", state.m_line):
                     if not open_tie:
                         open_tie = 1
                         build_str += "(" + the_note
@@ -307,6 +307,7 @@ def parse_line(ltype, sep, data, state):
                 state.m_line = state.m_line[3:]
             else:
                 state.m_line = state.m_line[1:]
+                # warn here?
 
         lyrics_line = "w:"
         for note_count in phrasing:
