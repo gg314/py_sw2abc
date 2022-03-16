@@ -311,9 +311,11 @@ def parse_line(ltype, sep, data, state):
 
         lyrics_line = "w:"
         for note_count in phrasing:
-            if m := re.match(r"\s*(\S+)\s+(.*)", state.l_line):
-                lyrics_line += " " + m.group(1) + note_count * " _"
-                state.l_line = m.group(2)
+            if m := re.match(r"\s*(\S+?)([\s-])(.*)", state.l_line):
+                lyrics_line += (
+                    " " + (m.group(1) + m.group(2)).strip() + (note_count * " _")
+                )
+                state.l_line = m.group(3)
             else:
                 lyrics_line += " " + state.l_line
                 break
