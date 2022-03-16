@@ -129,6 +129,7 @@ class LineState:
         self.time = None
         self.notes = []
         self.output_lines = []
+        self.open_tie = 0
 
 
 def parse_header(state):
@@ -222,7 +223,6 @@ def parse_line(ltype, sep, data, state):
         # print("SW:", state.m_line)
         build_str = ""
         beatcount = 0
-        open_tie = 0
         open_triplet = 0
         phrasing = []  # used for aligning lyrics
         while True:
@@ -246,6 +246,10 @@ def parse_line(ltype, sep, data, state):
                 build_str += "|"
                 state.m_line = state.m_line[3:]
                 beatcount = 0
+            elif re.match(
+                "^S-8", state.m_line
+            ):  # unknown, but evidently not very important. See: MRFOX. Caesura?
+                state.m_line = state.m_line[3:]
             elif re.match("^S-9", state.m_line):  # fermata
                 build_str += "H"
                 state.m_line = state.m_line[3:]
@@ -286,19 +290,19 @@ def parse_line(ltype, sep, data, state):
                     logging.error("Found confusing group: %s", m.groups())
 
                 if re.match(r"^(\S)([-#\$&\*%])(\S)_", state.m_line):
-                    if not open_tie:
-                        open_tie = 1
+                    if not state.open_tie:
+                        state.open_tie = 1
                         build_str += "(" + the_note
                     else:
-                        open_tie += 1
+                        state.open_tie += 1
                         build_str += the_note
                 else:
-                    if open_tie:
-                        phrasing.append(open_tie)
-                        open_tie = 0
+                    if state.open_tie:
+                        phrasing.append(state.open_tie)
+                        state.open_tie = 0
                         build_str += the_note + ")"
                     else:
-                        phrasing.append(open_tie)
+                        phrasing.append(state.open_tie)
                         build_str += the_note
 
                 if open_triplet == 3:
@@ -308,6 +312,9 @@ def parse_line(ltype, sep, data, state):
             else:
                 state.m_line = state.m_line[1:]
                 # warn here?
+
+        if state.open_tie:  # handle open tie at end of the line
+            phrasing.append(state.open_tie)
 
         lyrics_line = "w:"
         for note_count in phrasing:
@@ -333,6 +340,14 @@ def parse_line(ltype, sep, data, state):
 # @click.option("--file_out", help="output .abc filename")
 def main(filename, copy):
     """Do the conversion"""
+
+    logging.basicConfig(
+        encoding="ascii",
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        datefmt="%I:%M:%S %p",
+    )
+
     try:
         contents = filename.readlines()
     except Exception as e:  # pylint: disable=broad-except
@@ -340,9 +355,7 @@ def main(filename, copy):
         sys.exit()
 
     path_stem = Path(filename.name).stem
-    print(f"Converting SW file: {path_stem}")
-    # print("".join(contents))
-    # print("=" * 150)
+    logging.info("✔️  Converting SW file: %s", path_stem)
 
     state = LineState()
     line_pattern = re.compile(r"([A-Za-z])([-+])\s*(.*)")
@@ -355,13 +368,11 @@ def main(filename, copy):
             state = parse_line(ltype.upper(), sep, data, state)
 
         else:
-            logging.info("Line unrecognized: %s", line.strip())
+            logging.debug("Line unrecognized: %s", line.strip())
 
     output = parse_header(state) + state.output_lines
-    # print("\n".join(output))
     path_out = Path(f"./dt_abc/{path_stem}.abc")
     with open(path_out, encoding="UTF-8", mode="w") as f:
         f.write("\n".join(output))
-    # print(f"Saving ABC to: {path_out}")
     if copy:
         clipboard.copy("\n".join(output))
